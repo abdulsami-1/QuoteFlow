@@ -370,7 +370,7 @@ export default async function HomePage() {
         </div>
 
         <p className="text-[12px] mt-5" style={{ color: 'var(--fg-disabled)' }}>
-          No credit card required · Free forever plan available
+          Free forever plan · Works on any website · Up in 5 minutes
         </p>
       </section>
 
@@ -697,7 +697,7 @@ export default async function HomePage() {
         </div>
 
         <p className="text-center text-[12px] mt-8" style={{ color: 'var(--fg-disabled)' }}>
-          Cancel anytime · No contracts · Instant setup
+          All plans include AI summaries · Embed widget · Email alerts
         </p>
       </section>
 
@@ -770,7 +770,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <p className="relative mt-5 text-[12px]" style={{ color: 'rgba(255,255,255,0.28)' }}>
-            No credit card required · Cancel anytime
+            No setup fees · Works on any site · Free plan included
           </p>
         </div>
       </section>
