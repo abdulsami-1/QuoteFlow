@@ -13,6 +13,10 @@
     <img src="https://img.shields.io/badge/Gemini-2.0_Flash-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini">
     <img src="https://img.shields.io/github/actions/workflow/status/abdulsami-1/QuoteFlow/ci.yml?style=flat-square&label=CI" alt="CI">
   </p>
+
+  <br />
+
+  ![QuoteFlow landing page](public/Screenshot%202026-05-18%20231153.png)
 </div>
 
 ---
