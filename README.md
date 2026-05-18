@@ -1,7 +1,7 @@
 <div align="center">
   <h1>QuoteFlow</h1>
-  <p><strong>AI-powered lead intake and instant quoting platform for service businesses</strong></p>
-  <p>Embed a smart intake widget on any website. Let AI qualify leads, generate quotes, and notify you — automatically.</p>
+  <p>Lead intake and quoting tool for service businesses</p>
+  <p>Embed a chat-style intake form on any website. Gemini AI parses the conversation, matches a pricing rule, and sends you a lead summary — without manual review.</p>
 
   <p>
     <img src="https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js" alt="Next.js">
@@ -10,38 +10,47 @@
     <img src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
     <img src="https://img.shields.io/badge/Prisma-5-2D3748?style=flat-square&logo=prisma&logoColor=white" alt="Prisma">
     <img src="https://img.shields.io/badge/Stripe-Billing-635BFF?style=flat-square&logo=stripe&logoColor=white" alt="Stripe">
-    <img src="https://img.shields.io/badge/Gemini-2.0_Flash-4285F4?style=flat-square&logo=google&logoColor=white" alt="Google Gemini">
+    <img src="https://img.shields.io/badge/Gemini-2.0_Flash-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini">
+    <img src="https://img.shields.io/github/actions/workflow/status/abdulsami-1/QuoteFlow/ci.yml?style=flat-square&label=CI" alt="CI">
   </p>
 </div>
 
 ---
 
-## Overview
+## What it does
 
-QuoteFlow lets service businesses capture and qualify leads through an embeddable widget that lives on their own website. When a prospect fills out the intake form, Gemini AI analyzes their responses, assigns a price range from your pricing rules, flags urgency, and sends a formatted summary to your inbox — all in under 10 seconds.
+A business owner configures one or more services — each with a set of intake questions and keyword-based pricing tiers. They paste a single `<script>` tag on their website. When a visitor fills in the intake form, the app:
 
-The dashboard gives business owners a complete CRM-style view: lead pipeline, AI-generated summaries, quote history, analytics, and billing management.
+1. Sends the conversation to Gemini AI, which extracts name, email, urgency, and a decision keyword
+2. Matches that keyword to a pricing rule to produce a quote range
+3. Stores the lead with an AI-generated plain-English summary
+4. Sends an email notification to the business owner
+5. Returns the quote estimate to the prospect
+
+The dashboard lets the owner manage the lead pipeline (New → Contacted → Closed → Archived), view analytics, and manage billing.
+
+---
+
+## Screenshots
+
+> Screenshots will be added after production deployment.
 
 ---
 
 ## Features
 
-### For Business Owners
-- **Embeddable Intake Widget** — drop one `<script>` tag on any website; fully branded
-- **AI Lead Qualification** — Gemini 2.0 Flash reads conversation transcripts and extracts name, email, urgency, and intent
-- **Automated Quoting** — pricing rules map keywords to price tiers; quotes are instant and consistent
-- **Email Notifications** — formatted lead alerts with AI summary and quote range delivered to your inbox
-- **Lead Dashboard** — manage leads through NEW → CONTACTED → CLOSED → ARCHIVED pipeline
-- **Analytics** — monthly lead volume, urgency breakdown, revenue estimates, conversion trends
-- **Real-time Notifications** — in-app bell with unread badge; clears on open
-- **Dark / Light Mode** — full theme support across all pages
-
-### Platform
-- **Multi-service Support** — configure multiple services, each with its own questions and pricing rules
-- **Plan-based Lead Limits** — enforced per billing tier (Free: 5, Starter: 50, Pro: 200, Agency: unlimited)
-- **Returning Prospect Detection** — flags when an email has submitted before
-- **Stripe Billing** — checkout, portal, and webhook-based subscription sync
-- **Security-hardened API** — rate limiting on all public and auth routes, Zod validation, CORS scoped to intake only
+- Embeddable intake widget — paste one script tag on any site
+- Gemini 2.0 Flash for lead parsing and summary generation
+- Keyword-based pricing rules — configure tiers per service
+- Lead CRM with pipeline status, urgency flags, and CSV export
+- Email notifications per lead via SMTP
+- In-app notification bell
+- Analytics: monthly volume, urgency split, revenue estimates
+- Stripe billing with Checkout, portal, and webhook sync
+- JWT auth with httpOnly cookies
+- Dark/light mode
+- Rate limiting at middleware and route level
+- Returning prospect detection
 
 ---
 
@@ -51,90 +60,74 @@ The dashboard gives business owners a complete CRM-style view: lead pipeline, AI
 |-------|-----------|
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Language | TypeScript 5 |
-| UI | React 19 + Radix UI + shadcn/ui |
-| Styling | Tailwind CSS v4 (`@theme inline` design tokens) |
+| UI | React 19, Radix UI, shadcn/ui |
+| Styling | Tailwind CSS v4 |
 | Animation | Framer Motion |
-| Data Viz | Recharts |
+| Charts | Recharts |
 | ORM | Prisma 5 |
-| Database | PostgreSQL |
-| Auth | JWT (jose) + httpOnly cookies |
+| Database | PostgreSQL (Neon) |
+| Auth | JWT via jose + httpOnly cookies |
 | AI | Google Gemini 2.0 Flash |
 | Payments | Stripe (Checkout, Portal, Webhooks) |
 | Email | Nodemailer (SMTP) |
 | Validation | Zod |
-| State | Zustand + React Hook Form |
-| Testing | Vitest (unit) + Playwright (e2e) |
+| State | Zustand, React Hook Form |
+| Testing | Vitest (unit), Playwright (e2e) |
+| CI | GitHub Actions |
 | Deployment | Vercel / Railway |
-
----
-
-## Screenshots
-
-> Add screenshots here after deployment.
-
-| Dashboard | Lead Detail | Intake Widget | Billing |
-|-----------|------------|---------------|---------|
-| *(dashboard.png)* | *(lead-detail.png)* | *(widget.png)* | *(billing.png)* |
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    External Website                      │
-│  <script src="quoteflow-widget.js" data-token="...">    │
-└───────────────────────┬─────────────────────────────────┘
-                        │  CORS-open intake API
-                        ▼
-┌─────────────────────────────────────────────────────────┐
-│                   Next.js App (App Router)               │
-│                                                          │
-│  Middleware (proxy.ts)                                   │
-│  ├─ Global rate limit: 60 req/min per IP                │
-│  ├─ JWT auth guard for /dashboard + protected APIs      │
-│  └─ Public passthrough for /intake, /api/auth, /health  │
-│                                                          │
-│  API Routes                                              │
-│  ├─ /api/intake/[token]/submit  ← AI intake + quoting   │
-│  ├─ /api/leads/*                ← Lead CRUD             │
-│  ├─ /api/services/*             ← Service management    │
-│  ├─ /api/stripe/*               ← Billing               │
-│  ├─ /api/auth/*                 ← Login / signup        │
-│  └─ /api/stats                  ← Analytics             │
-│                                                          │
-│  Dashboard (Server + Client Components)                  │
-│  ├─ /dashboard          ← Overview + metrics            │
-│  ├─ /dashboard/leads    ← Pipeline table                │
-│  ├─ /dashboard/services ← Widget + service config       │
-│  ├─ /dashboard/stats    ← Charts + analytics            │
-│  ├─ /dashboard/settings ← Business config               │
-│  └─ /dashboard/billing  ← Plans + Stripe portal        │
-└──────────┬───────────────────────┬──────────────────────┘
-           │                       │
-           ▼                       ▼
-    PostgreSQL (Prisma)    Google Gemini AI
-                                   │
-                           Prompt 1: Intake conductor
-                           (extract name, email, intent,
-                            urgency, decision key)
-                                   │
-                           Prompt 2: Lead summarizer
-                           (plain-English summary for
-                            business owner email)
+External website
+  └─ <script> tag
+       └─ POST /api/intake/[embedToken]/submit  (CORS open)
+            ├─ Rate limit check (10 req/min per IP)
+            ├─ Plan lead-count check
+            ├─ Zod validation + prompt-injection sanitization
+            ├─ Gemini prompt 1 → extract name, email, urgency, decision key
+            ├─ Pricing rule match → quote range
+            ├─ Gemini prompt 2 → plain-English summary
+            ├─ DB: create Lead
+            ├─ Email: send owner notification
+            └─ DB: create Notification
+
+Next.js middleware (proxy.ts)
+  ├─ Global rate limit: 60 req/min per IP
+  ├─ JWT auth guard for /dashboard and protected APIs
+  └─ Public passthrough: /intake, /api/auth, /api/health
+
+Dashboard (server + client components)
+  ├─ /dashboard/leads    — lead pipeline table
+  ├─ /dashboard/services — service + pricing rule config
+  ├─ /dashboard/stats    — charts and analytics
+  ├─ /dashboard/settings — business profile
+  └─ /dashboard/billing  — Stripe plan management
+
+Database models: User, Subscription, BusinessConfig,
+                 Service, PricingRule, Lead, Notification
 ```
 
-### Lead Submission Flow
-1. Prospect completes intake widget on client website
-2. Widget POSTs conversation transcript to `/api/intake/[embedToken]/submit`
-3. Middleware applies global rate limit; route applies per-IP rate limit (10/min)
-4. Zod validates payload; answers sanitized against prompt injection
-5. Plan limit checked against monthly lead count
-6. Gemini extracts structured data (name, email, urgency, decision key)
-7. Pricing rule matched by decision key → quote range calculated
-8. Second Gemini call generates human-readable summary
-9. Lead saved to DB; email notification sent; in-app notification created
-10. Quote returned to widget for display to prospect
+---
+
+## Demo Account
+
+A demo account with sample data is available after running the seed script:
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@quoteflow.demo` |
+| Password | `demo1234` |
+
+The seed creates two services, 21 sample leads across all statuses, and sample notifications. Run it with:
+
+```bash
+npm run db:seed
+```
+
+> Re-running the seed is safe — it clears existing demo data first.
 
 ---
 
@@ -143,153 +136,144 @@ The dashboard gives business owners a complete CRM-style view: lead pipeline, AI
 ### Prerequisites
 
 - Node.js 20+
-- [Neon](https://neon.tech) PostgreSQL database (free tier available)
-- Google Gemini API key — [get one free](https://aistudio.google.com/app/apikey)
-- Stripe account (for billing features)
-- SMTP credentials (Gmail, Resend, Postmark, etc.)
+- [Neon](https://neon.tech) PostgreSQL database (free tier works)
+- Google Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- Stripe account for billing (optional — the app works without it)
+- SMTP credentials for email notifications (optional)
 
 ### Database Setup (Neon)
 
-1. Sign up at [neon.tech](https://neon.tech) and create a new project
-2. Go to your project dashboard → **Connection Details**
-3. Copy the **connection string** (use the pooler URL for best performance):
+1. Create a project at [neon.tech](https://neon.tech)
+2. Go to **Connection Details** and copy the **pooled** connection string:
    ```
    postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require
    ```
-4. Paste it as `DATABASE_URL` in your `.env` file
+3. Paste it as `DATABASE_URL` in your `.env`
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/abdulsami-1/QuoteFlow.git
 cd QuoteFlow
-
-# Install dependencies
 npm install
-
-# Set up environment variables
 cp .env.example .env
-# Edit .env — paste your Neon DATABASE_URL and other values
-
-# Push schema to Neon (creates all tables)
+# fill in .env values
 npm run db:push
-
-# Seed demo data
 npm run db:seed
-
-# Start the development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and log in:
-- **Email:** `admin@quoteflow.demo`
-- **Password:** `demo1234`
+Open [http://localhost:3000](http://localhost:3000) and log in with the demo account.
 
 ---
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in each value:
+Copy `.env.example` to `.env`:
 
 ```env
-# Database (PostgreSQL — Railway, Supabase, or Neon)
-DATABASE_URL="postgresql://user:password@host:5432/quoteflow"
+# PostgreSQL (Neon pooler URL recommended)
+DATABASE_URL="postgresql://user:password@ep-xxx-pooler.neon.tech/neondb?sslmode=require"
 
-# JWT secret — must be 32+ random characters
-# Generate with: openssl rand -base64 32
-JWT_SECRET="change-me-to-a-long-random-string-at-least-32-chars"
+# JWT — generate with: openssl rand -base64 32
+JWT_SECRET="at-least-32-random-characters"
 
-# Google Gemini AI — https://aistudio.google.com/app/apikey
-GEMINI_API_KEY="your-gemini-api-key-here"
+# Google Gemini
+GEMINI_API_KEY="your-key-from-aistudio.google.com"
 
-# SMTP for lead notification emails
-SMTP_HOST="smtp.example.com"
-SMTP_PORT="587"
-SMTP_USER="you@example.com"
-SMTP_PASS="your-smtp-password-or-app-password"
-
-# Public base URL
+# App base URL
 NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
 
-# Stripe — https://dashboard.stripe.com/apikeys
-STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key"
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_your_stripe_publishable_key"
-STRIPE_WEBHOOK_SECRET="whsec_your_stripe_webhook_secret"
+# SMTP (optional — leads are still saved without it)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="you@gmail.com"
+SMTP_PASS="your-app-password"
 
-# Stripe Price IDs (create in Stripe Dashboard under Products)
-STRIPE_STARTER_PRICE_ID="price_your_starter_price_id"
-STRIPE_PRO_PRICE_ID="price_your_pro_price_id"
-STRIPE_AGENCY_PRICE_ID="price_your_agency_price_id"
+# Stripe (optional — required for paid plans)
+STRIPE_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_STARTER_PRICE_ID="price_..."
+STRIPE_PRO_PRICE_ID="price_..."
+STRIPE_AGENCY_PRICE_ID="price_..."
 ```
 
 ---
 
 ## Stripe Setup
 
-1. Create three products in your [Stripe Dashboard](https://dashboard.stripe.com/products): **Starter** ($29/mo), **Pro** ($79/mo), **Agency** ($199/mo)
-2. Copy each price ID into your `.env`
-3. For local webhook testing, install the [Stripe CLI](https://stripe.com/docs/stripe-cli):
+1. Create three products in the [Stripe Dashboard](https://dashboard.stripe.com/products): Starter ($29/mo), Pro ($79/mo), Agency ($199/mo)
+2. Copy the price IDs into `.env`
+3. For local webhook testing:
    ```bash
    stripe listen --forward-to localhost:3000/api/stripe/webhook
    ```
-   Copy the printed webhook secret into `STRIPE_WEBHOOK_SECRET`
-
----
-
-## Deployment
-
-### Vercel (Recommended)
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-
-1. Push this repo to GitHub and import it in Vercel
-2. Add all environment variables in the Vercel dashboard (copy from `.env.example`)
-3. Set `DATABASE_URL` to your **Neon connection string** (pooler URL)
-4. `vercel.json` configures the build command (`prisma generate && next build`) automatically — schema is synced on every deploy
-5. Set up your Stripe webhook endpoint: `https://your-domain.vercel.app/api/stripe/webhook`
-
-### Railway
-
-1. Create a new Railway project and connect your GitHub repo
-2. Add environment variables manually in Railway Variables (use Neon for the database)
-3. Set `DATABASE_URL` to your Neon connection string
-4. `railway.json` configures the start command automatically
-
-> **Neon tip:** Copy the **pooler** connection string from your Neon dashboard for Vercel/Railway. It handles connection limits better under serverless scaling.
+   Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`
 
 ---
 
 ## Available Scripts
 
 ```bash
-npm run dev          # Start development server (Turbopack)
-npm run build        # Production build
-npm start            # Start production server
+npm run dev          # development server
+npm run build        # production build
+npm start            # production server
 
-npm run db:push      # Sync Prisma schema to Neon (creates/updates tables)
-npm run db:generate  # Regenerate Prisma client after schema changes
-npm run db:seed      # Seed demo data into database
-npm run db:studio    # Open Prisma Studio (visual DB browser)
+npm run db:push      # sync schema to database
+npm run db:generate  # regenerate Prisma client
+npm run db:seed      # seed demo data
+npm run db:studio    # open Prisma Studio
 
-npm test             # Run unit tests (Vitest)
-npm run test:e2e     # Run end-to-end tests (Playwright)
-npm run test:all     # Run all tests
+npm test             # unit tests (Vitest)
+npm run test:e2e     # e2e tests (Playwright)
 ```
 
 ### Database Migrations
 
-QuoteFlow uses `prisma db push` for schema sync (no migration files required for most changes):
+The project uses `prisma db push` rather than migration files. After changing `prisma/schema.prisma`:
 
 ```bash
-# After changing prisma/schema.prisma:
 npm run db:push
-
-# Inspect your Neon database visually:
-npm run db:studio
 ```
 
-For production schema changes, run `npm run db:push` in your deployment pipeline before starting the server. Both Vercel and Railway support this via the `buildCommand` in their config files.
+This runs automatically on Vercel as part of the build command (`prisma generate && next build`).
+
+---
+
+## Deployment
+
+### Vercel
+
+1. Push to GitHub and import in Vercel
+2. Set all environment variables in the Vercel dashboard
+3. Use the Neon pooler URL for `DATABASE_URL`
+4. Add a Stripe webhook endpoint: `https://your-domain.vercel.app/api/stripe/webhook`
+5. `vercel.json` configures the build command automatically
+
+### Railway
+
+1. Connect your GitHub repo
+2. Add environment variables (Neon for DATABASE_URL)
+3. `railway.json` sets the start command
+
+> **Note on rate limiting:** The in-memory rate limiter works per-instance. On Vercel's serverless/edge model, each function invocation may be a different instance, so effective limits will be higher than configured. For strict rate limiting in production, replace with [Upstash Redis](https://upstash.com/docs/redis/sdks/ratelimit-ts/overview).
+
+---
+
+## Production Checklist
+
+Before going live:
+
+- [ ] `DATABASE_URL` set to Neon pooler URL
+- [ ] `JWT_SECRET` is at least 32 random characters
+- [ ] `NEXT_PUBLIC_APP_URL` matches your actual domain
+- [ ] Stripe keys are live (`sk_live_`, `pk_live_`)
+- [ ] Stripe webhook endpoint is registered and `STRIPE_WEBHOOK_SECRET` is set
+- [ ] SMTP credentials tested — send a test lead through the widget
+- [ ] `GEMINI_API_KEY` is valid and has quota
+- [ ] `.env` is in `.gitignore` (it is by default in this repo)
+- [ ] Review Gemini API rate limits for your expected lead volume
 
 ---
 
@@ -298,84 +282,148 @@ For production schema changes, run `npm run db:push` in your deployment pipeline
 ```
 quoteflow/
 ├── app/
-│   ├── (auth)/              # Login + signup pages
-│   ├── (dashboard)/         # Protected dashboard pages
+│   ├── (auth)/              # login + signup
+│   ├── (dashboard)/         # protected dashboard pages
 │   ├── api/                 # API route handlers
-│   │   ├── auth/            # Login, signup, logout
-│   │   ├── business/        # Business config CRUD
-│   │   ├── intake/          # Public intake widget API (CORS-open)
-│   │   ├── leads/           # Lead management
-│   │   ├── notifications/   # In-app notifications
-│   │   ├── pricing/         # Pricing rule CRUD
-│   │   ├── services/        # Service CRUD
-│   │   ├── stats/           # Analytics aggregation
-│   │   └── stripe/          # Checkout, portal, webhook, sync
-│   └── intake/              # Public intake widget page
+│   │   ├── auth/            # login, signup, logout
+│   │   ├── business/        # business config
+│   │   ├── intake/          # public widget API (CORS-open)
+│   │   ├── leads/           # lead CRUD
+│   │   ├── notifications/   # in-app notifications
+│   │   ├── pricing/         # pricing rule CRUD
+│   │   ├── services/        # service CRUD
+│   │   ├── stats/           # analytics
+│   │   └── stripe/          # billing
+│   └── intake/              # public intake widget page
 ├── components/
+│   ├── billing/             # billing UI
+│   ├── dashboard/           # nav, sidebar, top bar
+│   ├── leads/               # leads table, detail panel
+│   ├── services/            # service builder, pricing editor
+│   ├── stats/               # charts
 │   ├── ui/                  # shadcn/ui base components
-│   ├── billing/             # Billing cards + plan management
-│   ├── dashboard/           # Dashboard layout + nav
-│   ├── leads/               # Lead table + detail
-│   ├── services/            # Service builder + widget preview
-│   └── stats/               # Analytics charts + metrics
+│   └── shared/              # empty states, loading
 ├── lib/
 │   ├── auth-helpers.ts      # JWT session helpers
-│   ├── db.ts                # Prisma client singleton
-│   ├── email.ts             # Lead notification emails
-│   ├── gemini.ts            # Google Gemini AI client
-│   ├── logger.ts            # Structured JSON logger
-│   ├── pricing.ts           # Pricing rule matching logic
+│   ├── db.ts                # Prisma client
+│   ├── email.ts             # lead notifications
+│   ├── gemini.ts            # Gemini AI client
+│   ├── pricing.ts           # pricing rule matching
 │   ├── prompts.ts           # Gemini prompt templates
-│   ├── rate-limiter.ts      # In-memory rate limiter
-│   ├── stripe.ts            # Stripe client + plan config
+│   ├── rate-limiter.ts      # in-memory rate limiter
+│   ├── stripe.ts            # Stripe client
 │   └── validations.ts       # Zod schemas
 ├── prisma/
-│   ├── schema.prisma        # Database schema
-│   └── seed.ts              # Demo data seeder
+│   ├── schema.prisma        # database schema
+│   └── seed.ts              # demo data seeder
 ├── tests/
-│   ├── unit/                # Vitest unit tests
-│   └── e2e/                 # Playwright e2e tests
-├── proxy.ts                 # Next.js middleware (auth + rate limit)
-├── vercel.json              # Vercel deployment config
-└── railway.json             # Railway deployment config
+│   ├── unit/                # Vitest tests
+│   └── e2e/                 # Playwright tests
+├── proxy.ts                 # Next.js middleware
+├── .github/workflows/ci.yml # GitHub Actions CI
+├── vercel.json
+└── railway.json
 ```
 
 ---
 
-## Security
+## API Reference
 
-- All passwords hashed with bcrypt (10 rounds)
-- JWT sessions in httpOnly cookies; no tokens exposed to JavaScript
-- Global rate limiting at middleware level (60 req/min per IP)
-- Per-route rate limiting on auth, intake, and mutation endpoints
-- Zod schema validation on every API input
-- Prompt injection prevention — user answers sanitized before Gemini calls
-- CORS wildcard scoped only to public intake routes
-- Stripe webhook signature verification on every event
-- Ownership checks on every resource query — no IDOR vulnerabilities
+### Health Check
+
+```
+GET /api/health
+```
+
+Returns `{ status: "ok" }` if the server is running. Does not check the database.
+
+### Intake Submit (Public)
+
+```
+POST /api/intake/[embedToken]/submit
+Content-Type: application/json
+
+{
+  "serviceId": "string",
+  "conversationLog": [
+    { "question": "What is your name?", "answer": "Jane Smith" },
+    { "question": "What do you need?", "answer": "A full website redesign" }
+  ]
+}
+```
+
+Rate limited to 10 requests/minute per IP. Returns quote range and lead ID on success.
+
+### Authentication
+
+```
+POST /api/auth/login
+{ "email": "...", "password": "..." }
+
+POST /api/auth/signup
+{ "email": "...", "password": "...", "name": "..." }
+
+POST /api/auth/logout
+```
+
+All other routes require a valid `qf_session` cookie (set on login).
 
 ---
 
-## Roadmap
+## Known Limitations
 
-- [ ] Multi-tenant agency mode — manage multiple client businesses from one account
-- [ ] Widget customization UI — live preview with brand color, logo, and copy editing
-- [ ] Zapier / Make integration — push leads to CRMs (HubSpot, Pipedrive, Notion)
-- [ ] SMS notifications — Twilio-based alerts for high-urgency leads
-- [ ] Distributed rate limiting — Upstash Redis for multi-instance deployments
-- [ ] White-label mode — remove QuoteFlow branding for agency resellers
-- [ ] Conversation replay — replay intake transcript as visual chat timeline
-- [ ] Lead scoring — ML-based ranking beyond urgency flag
-- [ ] A/B testing for intake questions — measure conversion across variants
+- **Rate limiting is in-memory.** On serverless deployments (Vercel), each function instance has its own counter. The actual effective rate limit per IP is `configured_limit × number_of_instances`. For production use with strict limits, replace with Upstash Redis.
+- **Gemini fallback is basic.** If Gemini fails to return valid JSON, the intake conductor falls back to a simple text extraction. The fallback name comes from the first answer and email defaults to `unknown@unknown.com`. These leads need manual review.
+- **No file attachments.** The intake widget only handles text responses. Attachments (photos, documents) are not supported.
+- **Single business per account.** Each user account maps to exactly one business config. Multi-business support would require schema changes.
+- **Webhook deduplication is in-memory.** The Stripe webhook handler deduplicates events using a `Set` that resets on each cold start. On a long-running server this is fine; on serverless it offers limited protection.
+- **No i18n.** The UI and widget are English-only.
+- **SMTP only.** Email uses Nodemailer with SMTP credentials. No native support for transactional email providers (Resend, Postmark) out of the box, though they can be used with their SMTP interface.
+
+---
+
+## Future Improvements
+
+These are realistic next steps, not a wishlist:
+
+- **Upstash Redis rate limiting** — consistent limits across serverless instances
+- **Webhook dedup table** — persist processed Stripe event IDs in Postgres instead of memory
+- **Multi-business support** — allow one account to manage multiple business configs
+- **File attachments in widget** — accept image uploads for services that need photo estimates
+- **Transactional email provider** — first-class support for Resend or Postmark
+- **Lead export improvements** — more formats (JSON, PDF summary) and date range filters
+- **Webhook retry visibility** — surface Stripe webhook delivery status in the dashboard
+- **Widget theming options** — custom CSS variables per business without code changes
+- **Lead assignment** — assign leads to team members if the account has multiple users
+
+---
+
+## Contributing
+
+### Local Setup
+
+Follow the [Installation](#installation) steps above. The project uses:
+- `npm test` for unit tests
+- `npm run test:e2e` for end-to-end tests (requires a running server and database)
+- `npx tsc --noEmit` for type checking
+
+### Commit Style
+
+Use short, descriptive messages in present tense:
+```
+add service drag-and-drop reordering
+fix pagination on leads table
+update Gemini prompt for better urgency detection
+```
 
 ---
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE) for details.
 
 ---
 
 <div align="center">
-  <p>Built for service businesses that want smarter lead capture.</p>
+  <sub>Built by Abdul Sami</sub>
 </div>
