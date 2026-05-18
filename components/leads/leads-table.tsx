@@ -140,6 +140,7 @@ export function LeadsTable({ leads: initialLeads, onLeadAdded }: LeadsTableProps
     {
       accessorKey: 'service.name',
       id: 'service',
+      meta: { className: 'hidden sm:table-cell' },
       header: ({ column }) => <SortableHeader column={column}>Service</SortableHeader>,
       cell: ({ row }) => (
         <span className="text-fg-secondary text-[13px]">{row.original.service.name}</span>
@@ -160,6 +161,7 @@ export function LeadsTable({ leads: initialLeads, onLeadAdded }: LeadsTableProps
     },
     {
       accessorKey: 'urgencyFlag',
+      meta: { className: 'hidden md:table-cell' },
       header: ({ column }) => <SortableHeader column={column}>Urgency</SortableHeader>,
       cell: ({ row }) => (
         <Badge variant={row.original.urgencyFlag === 'HIGH' ? 'high-urgency' : 'low-urgency'}>
@@ -194,6 +196,7 @@ export function LeadsTable({ leads: initialLeads, onLeadAdded }: LeadsTableProps
     },
     {
       accessorKey: 'createdAt',
+      meta: { className: 'hidden lg:table-cell' },
       header: ({ column }) => <SortableHeader column={column}>Date</SortableHeader>,
       cell: ({ row }) => (
         <span className="text-fg-tertiary text-[12px] tabular-nums">{formatDate(row.original.createdAt)}</span>
