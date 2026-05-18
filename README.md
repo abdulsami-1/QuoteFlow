@@ -35,12 +35,6 @@ The dashboard lets the owner manage the lead pipeline (New → Contacted → Clo
 
 ---
 
-## Screenshots
-
-> Screenshots will be added after production deployment.
-
----
-
 ## Features
 
 - Embeddable intake widget — paste one script tag on any site
