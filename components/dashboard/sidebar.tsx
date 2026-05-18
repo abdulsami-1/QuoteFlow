@@ -61,7 +61,7 @@ export function Sidebar({ businessName, userEmail, userName, usage }: SidebarPro
 
   async function handleSignOut() {
     await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
+    router.push('/')
   }
 
   const initials = (userName ?? userEmail ?? 'U')
