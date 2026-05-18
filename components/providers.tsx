@@ -10,7 +10,7 @@ interface ThemeContextValue {
   setTheme: (t: Theme) => void
 }
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: 'dark', setTheme: () => {} })
+const ThemeContext = createContext<ThemeContextValue>({ theme: 'light', setTheme: () => {} })
 
 export function useTheme() {
   return useContext(ThemeContext)
@@ -23,10 +23,10 @@ function applyTheme(t: Theme) {
 }
 
 export function Providers({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark')
+  const [theme, setThemeState] = useState<Theme>('light')
 
   useEffect(() => {
-    const stored = (localStorage.getItem('theme') as Theme | null) ?? 'dark'
+    const stored = (localStorage.getItem('theme') as Theme | null) ?? 'light'
     setThemeState(stored)
     applyTheme(stored)
   }, [])
