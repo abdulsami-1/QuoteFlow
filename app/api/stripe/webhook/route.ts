@@ -37,7 +37,15 @@ export async function POST(req: Request) {
       case 'checkout.session.completed': {
         const checkoutSession = event.data.object as Stripe.Checkout.Session
         const userId = checkoutSession.metadata?.userId
-        if (!userId || !checkoutSession.subscription || !checkoutSession.customer) break
+        if (!userId || !checkoutSession.subscription || !checkoutSession.customer) {
+          console.error('[stripe/webhook] checkout.session.completed missing required fields', {
+            eventId: event.id,
+            hasUserId: !!userId,
+            hasSubscription: !!checkoutSession.subscription,
+            hasCustomer: !!checkoutSession.customer,
+          })
+          break
+        }
 
         const stripeSubscription = await stripe.subscriptions.retrieve(
           checkoutSession.subscription as string
@@ -66,42 +74,55 @@ export async function POST(req: Request) {
             cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
           },
         })
+        console.error('[stripe/webhook] checkout.session.completed — plan activated', { eventId: event.id, userId, plan })
         break
       }
 
       case 'customer.subscription.updated': {
         const sub = event.data.object as Stripe.Subscription
         const userId = await getUserIdFromCustomer(sub.customer as string)
-        if (!userId) break
+        if (!userId) {
+          console.error('[stripe/webhook] customer.subscription.updated — userId not found', { eventId: event.id, customerId: sub.customer })
+          break
+        }
 
         const priceId = sub.items.data[0]?.price.id
+        const plan = getPlanFromPriceId(priceId)
 
         await db.subscription.update({
           where: { userId },
           data: {
             stripePriceId: priceId,
-            plan: getPlanFromPriceId(priceId),
+            plan,
             status: sub.status,
             cancelAtPeriodEnd: sub.cancel_at_period_end,
           },
         })
+        console.error('[stripe/webhook] customer.subscription.updated', { eventId: event.id, userId, plan, status: sub.status })
         break
       }
 
       case 'customer.subscription.deleted': {
         const sub = event.data.object as Stripe.Subscription
         const userId = await getUserIdFromCustomer(sub.customer as string)
-        if (!userId) break
+        if (!userId) {
+          console.error('[stripe/webhook] customer.subscription.deleted — userId not found', { eventId: event.id, customerId: sub.customer })
+          break
+        }
 
         await db.subscription.update({
           where: { userId },
           data: { plan: 'free', status: 'inactive', cancelAtPeriodEnd: false },
         })
+        console.error('[stripe/webhook] customer.subscription.deleted — downgraded to free', { eventId: event.id, userId })
         break
       }
+
+      default:
+        console.error('[stripe/webhook] unhandled event type', { type: event.type, eventId: event.id })
     }
   } catch (err) {
-    console.error('Stripe webhook handler error:', err)
+    console.error('[stripe/webhook] handler error', { eventId: event.id, type: event.type, err })
     return Response.json({ error: 'Webhook handler failed' }, { status: 500 })
   }
 
