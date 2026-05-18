@@ -13,3 +13,11 @@ export const PLANS = {
 } as const
 
 export type PlanKey = keyof typeof PLANS
+
+export function getPlanFromPriceId(priceId: string | undefined): string {
+  if (!priceId) return 'free'
+  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return 'starter'
+  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro'
+  if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) return 'agency'
+  return 'free'
+}

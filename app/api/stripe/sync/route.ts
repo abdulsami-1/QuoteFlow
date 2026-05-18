@@ -1,6 +1,6 @@
 import { requireAuth } from '@/lib/auth-helpers'
 import { db } from '@/lib/db'
-import { stripe } from '@/lib/stripe'
+import { stripe, getPlanFromPriceId } from '@/lib/stripe'
 
 export async function POST(req: Request) {
   try {
@@ -51,18 +51,11 @@ export async function POST(req: Request) {
       },
     })
 
+    console.error('[stripe/sync] plan synced', { userId: session.userId, priceId, plan })
     return Response.json({ success: true, plan })
   } catch (err) {
     if (err instanceof Response) return err
     console.error('POST /api/stripe/sync error:', err)
     return Response.json({ success: false, error: 'Internal server error' }, { status: 500 })
   }
-}
-
-function getPlanFromPriceId(priceId: string | undefined): string {
-  if (!priceId) return 'free'
-  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return 'starter'
-  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro'
-  if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) return 'agency'
-  return 'free'
 }

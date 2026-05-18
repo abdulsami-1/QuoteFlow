@@ -1,5 +1,5 @@
 import { headers } from 'next/headers'
-import { stripe } from '@/lib/stripe'
+import { stripe, getPlanFromPriceId } from '@/lib/stripe'
 import { db } from '@/lib/db'
 import type Stripe from 'stripe'
 
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
             cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
           },
         })
-        console.error('[stripe/webhook] checkout.session.completed — plan activated', { eventId: event.id, userId, plan })
+        console.error('[stripe/webhook] checkout.session.completed — plan activated', { eventId: event.id, userId, priceId, plan })
         break
       }
 
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
             cancelAtPeriodEnd: sub.cancel_at_period_end,
           },
         })
-        console.error('[stripe/webhook] customer.subscription.updated', { eventId: event.id, userId, plan, status: sub.status })
+        console.error('[stripe/webhook] customer.subscription.updated', { eventId: event.id, userId, priceId, plan, status: sub.status })
         break
       }
 
@@ -127,14 +127,6 @@ export async function POST(req: Request) {
   }
 
   return Response.json({ received: true })
-}
-
-function getPlanFromPriceId(priceId: string | undefined): string {
-  if (!priceId) return 'free'
-  if (priceId === process.env.STRIPE_STARTER_PRICE_ID) return 'starter'
-  if (priceId === process.env.STRIPE_PRO_PRICE_ID) return 'pro'
-  if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) return 'agency'
-  return 'free'
 }
 
 async function getUserIdFromCustomer(customerId: string): Promise<string | null> {
