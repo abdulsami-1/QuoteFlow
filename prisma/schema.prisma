@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  name           String?
+  passwordHash   String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  businessConfig BusinessConfig?
+  subscription   Subscription?
+  @@index([email])
+}
+
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  plan                 String    @default("free")
+  status               String    @default("inactive")
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  user                 User      @relation(fields:[userId], references:[id], onDelete:Cascade)
+  @@index([userId])
+  @@index([stripeCustomerId])
+}
+
+model BusinessConfig {
+  id                  String         @id @default(cuid())
+  userId              String         @unique
+  name                String
+  brandColor          String         @default("#6366f1")
+  logoUrl             String?
+  websiteUrl          String?
+  ownerEmail          String
+  embedToken          String         @unique @default(cuid())
+  notifyOnEveryLead   Boolean        @default(true)
+  notifyOnHighUrgency Boolean        @default(true)
+  digestFrequency     String         @default("instant")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  user                User           @relation(fields:[userId], references:[id], onDelete:Cascade)
+  services            Service[]
+  leads               Lead[]
+  notifications       Notification[]
+  @@index([userId])
+  @@index([embedToken])
+}
+
+model Service {
+  id               String         @id @default(cuid())
+  businessConfigId String
+  name             String
+  questions        Json
+  isActive         Boolean        @default(true)
+  order            Int            @default(0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  businessConfig   BusinessConfig @relation(fields:[businessConfigId], references:[id], onDelete:Cascade)
+  pricingRules     PricingRule[]
+  leads            Lead[]
+  @@index([businessConfigId])
+}
+
+model PricingRule {
+  id             String  @id @default(cuid())
+  serviceId      String
+  tierLabel      String
+  minPrice       Int
+  maxPrice       Int
+  triggerKeyword String
+  service        Service @relation(fields:[serviceId], references:[id], onDelete:Cascade)
+  @@index([serviceId])
+}
+
+model Lead {
+  id               String         @id @default(cuid())
+  businessConfigId String
+  serviceId        String
+  prospectName     String
+  prospectEmail    String
+  intakeTranscript Json
+  aiSummary        String         @db.Text
+  quoteMin         Int
+  quoteMax         Int
+  urgencyFlag      UrgencyFlag    @default(LOW)
+  status           LeadStatus     @default(NEW)
+  emailSent        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  businessConfig   BusinessConfig @relation(fields:[businessConfigId], references:[id], onDelete:Cascade)
+  service          Service        @relation(fields:[serviceId], references:[id])
+  @@index([businessConfigId, status])
+  @@index([businessConfigId, createdAt])
+}
+
+model Notification {
+  id               String         @id @default(cuid())
+  businessConfigId String
+  message          String
+  type             String         @default("lead")
+  readAt           DateTime?
+  createdAt        DateTime       @default(now())
+  businessConfig   BusinessConfig @relation(fields:[businessConfigId], references:[id], onDelete:Cascade)
+  @@index([businessConfigId, createdAt])
+  @@index([businessConfigId, readAt])
+}
+
+enum UrgencyFlag {
+  HIGH
+  LOW
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+  ARCHIVED
+}

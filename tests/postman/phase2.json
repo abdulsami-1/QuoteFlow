@@ -1,0 +1,205 @@
+{
+  "info": {
+    "name": "QuoteFlow Phase 2 — Intake API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "embedToken", "value": "" },
+    { "key": "serviceId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Setup — Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login succeeds', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"admin@quoteflow.demo\",\"password\":\"demo1234\"}"
+        }
+      }
+    },
+    {
+      "name": "Setup — Get Business (store embedToken)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns business config', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.collectionVariables.set('embedToken', json.data.embedToken);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/business"
+      }
+    },
+    {
+      "name": "Setup — Get Services (store serviceId)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns services', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.length).to.be.greaterThan(0);",
+              "  pm.collectionVariables.set('serviceId', json.data[0].id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/services"
+      }
+    },
+    {
+      "name": "GET /api/intake/:embedToken — valid token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has businessName', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.businessName).to.be.a('string');",
+              "  pm.expect(json.data.services).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/intake/{{embedToken}}"
+      }
+    },
+    {
+      "name": "GET /api/intake/invalid-token — 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 404', () => pm.response.to.have.status(404));",
+              "pm.test('success is false', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/intake/this-token-does-not-exist"
+      }
+    },
+    {
+      "name": "POST /api/intake/:embedToken/submit — missing fields → 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 400 or 404', () => {",
+              "  pm.expect([400, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.test('success is false', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/intake/{{embedToken}}/submit",
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      }
+    },
+    {
+      "name": "POST /api/intake/:embedToken/submit — empty conversationLog → 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 400', () => pm.response.to.have.status(400));",
+              "pm.test('success is false', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/intake/{{embedToken}}/submit",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"serviceId\":\"{{serviceId}}\",\"conversationLog\":[]}"
+        }
+      }
+    },
+    {
+      "name": "GET /api/health — alive check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('DB ok', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.db).to.equal('ok');",
+              "  pm.expect(json.data.version).to.equal('1.0.0');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/health"
+      }
+    }
+  ]
+}

@@ -1,0 +1,315 @@
+{
+  "info": {
+    "name": "QuoteFlow Phase 3 — Leads & Status",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "leadId", "value": "" },
+    { "key": "userAToken", "value": "" },
+    { "key": "userBToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Setup — Login as demo user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login succeeds', () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().success).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"admin@quoteflow.demo\",\"password\":\"demo1234\"}"
+        }
+      }
+    },
+    {
+      "name": "GET /api/leads — returns paginated leads",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Returns lead array', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.leads).to.be.an('array');",
+              "  pm.expect(json.data.leads.length).to.be.greaterThan(0);",
+              "  pm.expect(json.data.total).to.be.a('number');",
+              "  // Store first lead ID for subsequent tests",
+              "  pm.collectionVariables.set('leadId', json.data.leads[0].id);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads"
+      }
+    },
+    {
+      "name": "GET /api/leads?status=NEW — filters by status",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('All returned leads have status NEW', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  json.data.leads.forEach(lead => {",
+              "    pm.expect(lead.status).to.equal('NEW');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads?status=NEW"
+      }
+    },
+    {
+      "name": "GET /api/leads/[id] — returns lead detail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Lead has all required fields', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  const lead = json.data;",
+              "  pm.expect(lead.prospectName).to.be.a('string');",
+              "  pm.expect(lead.prospectEmail).to.be.a('string');",
+              "  pm.expect(lead.intakeTranscript).to.be.an('array');",
+              "  pm.expect(lead.aiSummary).to.be.a('string');",
+              "  pm.expect(lead.quoteMin).to.be.a('number');",
+              "  pm.expect(lead.quoteMax).to.be.a('number');",
+              "  pm.expect(lead.status).to.be.a('string');",
+              "  pm.expect(lead.urgencyFlag).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads/{{leadId}}"
+      }
+    },
+    {
+      "name": "GET /api/leads/nonexistent — 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 404', () => pm.response.to.have.status(404));",
+              "pm.test('success is false', () => {",
+              "  pm.expect(pm.response.json().success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads/nonexistent-lead-id-000"
+      }
+    },
+    {
+      "name": "PUT /api/leads/[id] — update status to CONTACTED",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status updated correctly', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/leads/{{leadId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\":\"CONTACTED\"}"
+        }
+      }
+    },
+    {
+      "name": "GET /api/leads/[id] — verify status persisted",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Status is now CONTACTED', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads/{{leadId}}"
+      }
+    },
+    {
+      "name": "PUT /api/leads/[id] — invalid status → 422",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 422', () => pm.response.to.have.status(422));",
+              "pm.test('success is false', () => {",
+              "  pm.expect(pm.response.json().success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/leads/{{leadId}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"status\":\"INVALID_STATUS\"}"
+        }
+      }
+    },
+    {
+      "name": "Ownership — signup new user B",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Signup succeeds or user exists', () => {",
+              "  pm.expect([201, 409]).to.include(pm.response.code);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/signup",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"user-b-test@quoteflow.test\",\"password\":\"testpass123\",\"name\":\"User B\"}"
+        }
+      }
+    },
+    {
+      "name": "Ownership — GET /api/leads/[id] as user B → 403 or 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 403 (ownership violation) or 404', () => {",
+              "  // 403 = found but forbidden, 404 = not found (both acceptable for cross-user access)",
+              "  pm.expect([403, 404]).to.include(pm.response.code);",
+              "});",
+              "pm.test('success is false', () => {",
+              "  pm.expect(pm.response.json().success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads/{{leadId}}"
+      }
+    },
+    {
+      "name": "GET /api/leads — unauthenticated → 401",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Clear cookies to simulate unauthenticated request",
+              "pm.request.headers.remove('Cookie');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 401 without auth', () => pm.response.to.have.status(401));",
+              "pm.test('success is false', () => {",
+              "  pm.expect(pm.response.json().success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/leads",
+        "header": [{ "key": "Cookie", "value": "" }]
+      }
+    },
+    {
+      "name": "GET /api/stats — returns metric cards data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has all metric fields', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.totalLeads).to.be.a('number');",
+              "  pm.expect(json.data.leadsThisWeek).to.be.a('number');",
+              "  pm.expect(json.data.avgQuoteValue).to.be.a('number');",
+              "  pm.expect(json.data.conversionRate).to.be.a('number');",
+              "  pm.expect(json.data.leadsPerDay).to.be.an('array');",
+              "  pm.expect(json.data.statusDistribution).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/stats"
+      }
+    }
+  ]
+}

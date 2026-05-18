@@ -1,0 +1,402 @@
+{
+  "info": {
+    "name": "QuoteFlow Phase 1 API",
+    "description": "API test collection for QuoteFlow Phase 1",
+    "_postman_id": "quoteflow-phase1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" },
+    { "key": "serviceId", "value": "", "type": "string" },
+    { "key": "leadId", "value": "", "type": "string" },
+    { "key": "ruleId", "value": "", "type": "string" },
+    { "key": "embedToken", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success true', () => pm.expect(pm.response.json().success).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/signup",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/signup",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"test@test.com\", \"password\": \"testpass123\", \"name\": \"Test User\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201 or 409', () => { const s = pm.response.code; pm.expect([201, 409]).to.include(s); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/login (demo)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"admin@quoteflow.demo\", \"password\": \"demo1234\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('success true', () => pm.expect(pm.response.json().success).to.be.true);",
+                  "const cookie = pm.response.headers.get('Set-Cookie') || '';",
+                  "const match = cookie.match(/qf_session=([^;]+)/);",
+                  "if (match) pm.collectionVariables.set('authCookie', 'qf_session=' + match[1]);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/logout",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Business",
+      "item": [
+        {
+          "name": "GET /api/business",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/business",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.embedToken) pm.collectionVariables.set('embedToken', json.data.embedToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/business",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/business",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{authCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Artisan Web Studio\", \"brandColor\": \"#6366f1\", \"ownerEmail\": \"admin@quoteflow.demo\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Services",
+      "item": [
+        {
+          "name": "GET /api/services",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/services",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data[0]) pm.collectionVariables.set('serviceId', json.data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/services",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/services",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{authCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Logo Design\", \"questions\": [\"What industry are you in?\", \"Do you have brand colors?\"], \"isActive\": true, \"order\": 2}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/services/:serviceId",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/services/{{serviceId}}",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/services/:serviceId",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/services/{{serviceId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{authCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Landing Page Design (Updated)\", \"questions\": [\"What is your business name?\", \"What is your goal?\"], \"isActive\": true, \"order\": 0}"
+            }
+          }
+        },
+        {
+          "name": "GET /api/services/:serviceId/pricing",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/services/{{serviceId}}/pricing",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data[0]) pm.collectionVariables.set('ruleId', json.data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/services/:serviceId/pricing",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/services/{{serviceId}}/pricing",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{authCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"tierLabel\": \"Ultra\", \"minPrice\": 2500, \"maxPrice\": 4000, \"triggerKeyword\": \"ultra\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pricing Rules",
+      "item": [
+        {
+          "name": "PUT /api/pricing/:ruleId",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/pricing/{{ruleId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{authCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"tierLabel\": \"Basic (Updated)\", \"minPrice\": 450, \"maxPrice\": 750, \"triggerKeyword\": \"simple\"}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/pricing/:ruleId",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/pricing/{{ruleId}}",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "GET /api/leads",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leads",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.leads && json.data.leads[0]) pm.collectionVariables.set('leadId', json.data.leads[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/leads/:leadId",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leads/{{leadId}}",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/leads/:leadId (status update)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/leads/{{leadId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "{{authCookie}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\": \"CONTACTED\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stats",
+      "item": [
+        {
+          "name": "GET /api/stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/stats",
+            "header": [{ "key": "Cookie", "value": "{{authCookie}}" }]
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('has totalLeads', () => pm.expect(json.data).to.have.property('totalLeads'));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public Intake",
+      "item": [
+        {
+          "name": "GET /api/intake/:embedToken (no auth)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/intake/{{embedToken}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 or 404', () => { const s = pm.response.code; pm.expect([200, 404]).to.include(s); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

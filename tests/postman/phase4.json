@@ -1,0 +1,226 @@
+{
+  "info": {
+    "name": "QuoteFlow Phase 4 — Stats & Settings",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" }
+  ],
+  "item": [
+    {
+      "name": "Setup — Login as demo user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login succeeds', () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().success).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"admin@quoteflow.demo\",\"password\":\"demo1234\"}"
+        }
+      }
+    },
+    {
+      "name": "GET /api/stats — returns all metric fields",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has all metric fields', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.totalLeads).to.be.a('number');",
+              "  pm.expect(json.data.leadsThisWeek).to.be.a('number');",
+              "  pm.expect(json.data.avgQuoteValue).to.be.a('number');",
+              "  pm.expect(json.data.conversionRate).to.be.a('number');",
+              "  pm.expect(json.data.leadsPerDay).to.be.an('array');",
+              "  pm.expect(json.data.statusDistribution).to.be.an('array');",
+              "});",
+              "pm.test('leadsPerDay has 30 entries', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.leadsPerDay.length).to.equal(30);",
+              "});",
+              "pm.test('leadsPerDay entries have date and count', () => {",
+              "  const json = pm.response.json();",
+              "  json.data.leadsPerDay.forEach(entry => {",
+              "    pm.expect(entry.date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+              "    pm.expect(entry.count).to.be.a('number');",
+              "  });",
+              "});",
+              "pm.test('statusDistribution entries have status and count', () => {",
+              "  const json = pm.response.json();",
+              "  json.data.statusDistribution.forEach(entry => {",
+              "    pm.expect(entry.status).to.be.a('string');",
+              "    pm.expect(entry.count).to.be.a('number');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/stats"
+      }
+    },
+    {
+      "name": "GET /api/stats — totalLeads > 0 with seed data",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has seed data', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.totalLeads).to.be.greaterThan(0);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/stats"
+      }
+    },
+    {
+      "name": "GET /api/stats — unauthenticated → 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 401 without auth', () => pm.response.to.have.status(401));",
+              "pm.test('success is false', () => {",
+              "  pm.expect(pm.response.json().success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/stats",
+        "header": [{ "key": "Cookie", "value": "" }]
+      }
+    },
+    {
+      "name": "GET /api/business — returns config with embedToken",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has embedToken', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.embedToken).to.be.a('string');",
+              "  pm.expect(json.data.embedToken.length).to.be.greaterThan(0);",
+              "  pm.collectionVariables.set('embedToken', json.data.embedToken);",
+              "});",
+              "pm.test('Has name and brandColor', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.data.name).to.be.a('string');",
+              "  pm.expect(json.data.brandColor).to.match(/^#[0-9a-fA-F]{6}$/);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/business"
+      }
+    },
+    {
+      "name": "PUT /api/business — update brandColor",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+              "pm.test('brandColor updated', () => {",
+              "  const json = pm.response.json();",
+              "  pm.expect(json.success).to.be.true;",
+              "  pm.expect(json.data.brandColor).to.equal('#ff6600');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/business",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Artisan Web Studio\",\"brandColor\":\"#ff6600\",\"ownerEmail\":\"admin@quoteflow.demo\"}"
+        }
+      }
+    },
+    {
+      "name": "PUT /api/business — invalid brandColor → 422",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 422', () => pm.response.to.have.status(422));",
+              "pm.test('success is false', () => {",
+              "  pm.expect(pm.response.json().success).to.be.false;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/business",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Test\",\"brandColor\":\"not-a-color\",\"ownerEmail\":\"admin@quoteflow.demo\"}"
+        }
+      }
+    },
+    {
+      "name": "PUT /api/business — restore original brandColor",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Returns 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/business",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"name\":\"Artisan Web Studio\",\"brandColor\":\"#6366f1\",\"ownerEmail\":\"admin@quoteflow.demo\"}"
+        }
+      }
+    }
+  ]
+}
