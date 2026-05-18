@@ -61,26 +61,6 @@ export default function LoginPage() {
           </Link>
         </p>
 
-        {/* Demo credentials */}
-        <div
-          className="rounded-xl mt-5 px-4 py-3.5 text-[12px] space-y-1"
-          style={{
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.07), rgba(0,0,0,0))',
-            border: '1px solid var(--border-brand)',
-          }}
-        >
-          <p className="font-bold text-[10px] uppercase tracking-widest mb-2" style={{ color: 'var(--brand-light)' }}>
-            Demo credentials
-          </p>
-          <p className="text-fg-tertiary">
-            Email:{' '}
-            <span className="text-fg-primary font-mono text-[11px]">admin@quoteflow.demo</span>
-          </p>
-          <p className="text-fg-tertiary">
-            Password:{' '}
-            <span className="text-fg-primary font-mono text-[11px]">demo1234</span>
-          </p>
-        </div>
       </div>
     </div>
   )

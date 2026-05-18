@@ -528,7 +528,6 @@ async function main() {
   console.log('✅ Created notifications')
 
   console.log('\n🎉 Seed complete!')
-  console.log('   Login: admin@quoteflow.demo / demo1234')
   console.log('   Embed token:', business.embedToken)
 }
 

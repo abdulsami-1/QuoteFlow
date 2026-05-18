@@ -112,22 +112,9 @@ Database models: User, Subscription, BusinessConfig,
 
 ---
 
-## Demo Account
+## Demo Access
 
-A demo account with sample data is available after running the seed script:
-
-| Field | Value |
-|-------|-------|
-| Email | `admin@quoteflow.demo` |
-| Password | `demo1234` |
-
-The seed creates two services, 21 sample leads across all statuses, and sample notifications. Run it with:
-
-```bash
-npm run db:seed
-```
-
-> Re-running the seed is safe — it clears existing demo data first.
+Live demo available via deployed application preview.
 
 ---
 
@@ -163,7 +150,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and log in with the demo account.
+Open [http://localhost:3000](http://localhost:3000) and create an account to get started.
 
 ---
 
